@@ -1,4 +1,38 @@
-// Smooth scrolling for anchor links
+// Navigation
+const navbar = document.getElementById('navbar');
+const hamburger = document.querySelector('.hamburger');
+const navMenu = document.querySelector('.nav-menu');
+const navLinks = document.querySelectorAll('.nav-link');
+
+// Navbar scroll effect
+window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+    } else {
+        navbar.classList.remove('scrolled');
+    }
+    
+    // Update active nav link
+    updateActiveNav();
+});
+
+// Hamburger menu toggle
+if (hamburger) {
+    hamburger.addEventListener('click', () => {
+        hamburger.classList.toggle('active');
+        navMenu.classList.toggle('active');
+    });
+}
+
+// Close menu when clicking nav link
+navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+        hamburger.classList.remove('active');
+        navMenu.classList.remove('active');
+    });
+});
+
+// Smooth scrolling for navigation links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
@@ -7,7 +41,6 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         
         const target = document.querySelector(targetId);
         if (target) {
-            // Account for top navigation bar height (80px)
             const offsetTop = target.offsetTop - 80;
             window.scrollTo({
                 top: offsetTop,
@@ -16,6 +49,27 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         }
     });
 });
+
+// Update active navigation link
+function updateActiveNav() {
+    const sections = document.querySelectorAll('section[id]');
+    const scrollY = window.pageYOffset;
+    
+    sections.forEach(section => {
+        const sectionHeight = section.offsetHeight;
+        const sectionTop = section.offsetTop - 100;
+        const sectionId = section.getAttribute('id');
+        
+        if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${sectionId}`) {
+                    link.classList.add('active');
+                }
+            });
+        }
+    });
+}
 
 // Intersection Observer for animations
 const observerOptions = {
@@ -30,15 +84,15 @@ const observer = new IntersectionObserver((entries) => {
             entry.target.style.transform = 'translateY(0)';
             
             // Animate skill bars when skills section is visible
-            if (entry.target.classList.contains('skill-item') || entry.target.closest('.skills')) {
-                animateSkillBars();
+            if (entry.target.classList.contains('skill-category-card')) {
+                animateSkillBars(entry.target);
             }
         }
     });
 }, observerOptions);
 
-// Observe all sections and skill items
-document.querySelectorAll('section, .skill-item').forEach(element => {
+// Observe elements for animation
+document.querySelectorAll('.skill-category-card, .project-card, .timeline-item, .education-card, .language-card, .stat-item').forEach(element => {
     element.style.opacity = '0';
     element.style.transform = 'translateY(30px)';
     element.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
@@ -46,57 +100,34 @@ document.querySelectorAll('section, .skill-item').forEach(element => {
 });
 
 // Animate skill bars
-function animateSkillBars() {
-    const skillBars = document.querySelectorAll('.skill-progress');
+function animateSkillBars(container) {
+    const skillBars = container.querySelectorAll('.skill-progress');
     skillBars.forEach(bar => {
         const width = bar.getAttribute('data-width');
         if (width && !bar.classList.contains('animated')) {
             bar.classList.add('animated');
             setTimeout(() => {
                 bar.style.width = width + '%';
-            }, 100);
+            }, 200);
         }
     });
 }
 
-// Scroll event listener
-let lastScrollTop = 0;
-
-window.addEventListener('scroll', () => {
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    
-    // Update navigation active state
-    updateActiveNav();
-    
-    lastScrollTop = scrollTop;
+// Initialize skill bars on page load if skills section is visible
+window.addEventListener('load', () => {
+    const skillsSection = document.querySelector('.skills');
+    if (skillsSection) {
+        const rect = skillsSection.getBoundingClientRect();
+        if (rect.top < window.innerHeight) {
+            document.querySelectorAll('.skill-category-card').forEach(card => {
+                animateSkillBars(card);
+            });
+        }
+    }
 });
 
-// Update active navigation link based on scroll position
-function updateActiveNav() {
-    const sections = document.querySelectorAll('section[id], header[id]');
-    const navLinks = document.querySelectorAll('.nav-link');
-    
-    let current = '';
-    
-    sections.forEach(section => {
-        const sectionTop = section.offsetTop - 100;
-        const sectionHeight = section.clientHeight;
-        if (window.pageYOffset >= sectionTop && window.pageYOffset < sectionTop + sectionHeight) {
-            current = section.getAttribute('id');
-        }
-    });
-    
-    navLinks.forEach(link => {
-        link.classList.remove('active');
-        const href = link.getAttribute('href');
-        if (href === `#${current}` || (current === 'home' && href === '#home')) {
-            link.classList.add('active');
-        }
-    });
-}
-
-// Handle profile image placeholder
-const profileImg = document.getElementById('profile-img');
+// Profile image error handling
+const profileImg = document.querySelector('.profile-img');
 if (profileImg) {
     profileImg.onerror = function() {
         this.style.display = 'none';
@@ -106,7 +137,7 @@ if (profileImg) {
         placeholder.style.cssText = `
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%);
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.3) 0%, rgba(30, 58, 95, 0.3) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -118,17 +149,7 @@ if (profileImg) {
     };
 }
 
-// Add parallax effect to sidebar
-window.addEventListener('scroll', () => {
-    const sidebar = document.querySelector('.sidebar');
-    if (sidebar && window.innerWidth > 1024) {
-        const scrolled = window.pageYOffset;
-        const rate = scrolled * 0.3;
-        sidebar.style.transform = `translateY(${rate}px)`;
-    }
-});
-
-// Add typing effect to name (optional enhancement)
+// Add typing effect to hero title (optional enhancement)
 function typeWriter(element, text, speed = 100) {
     let i = 0;
     element.textContent = '';
@@ -142,18 +163,8 @@ function typeWriter(element, text, speed = 100) {
     type();
 }
 
-// Initialize on page load
+// Smooth page load animation
 document.addEventListener('DOMContentLoaded', () => {
-    // Trigger skill bar animation if skills section is already visible
-    const skillsSection = document.querySelector('.skills');
-    if (skillsSection) {
-        const rect = skillsSection.getBoundingClientRect();
-        if (rect.top < window.innerHeight) {
-            animateSkillBars();
-        }
-    }
-    
-    // Add smooth entrance animation
     document.body.style.opacity = '0';
     setTimeout(() => {
         document.body.style.transition = 'opacity 0.5s ease';
@@ -161,58 +172,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 100);
 });
 
-// Add print stylesheet for printing
+// Copy email to clipboard functionality
+const emailLinks = document.querySelectorAll('a[href^="mailto:"]');
+emailLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+        const email = this.getAttribute('href').replace('mailto:', '');
+        navigator.clipboard.writeText(email).then(() => {
+            const originalText = this.textContent;
+            this.textContent = 'Email Copied!';
+            setTimeout(() => {
+                this.textContent = originalText;
+            }, 2000);
+        }).catch(() => {
+            // Fallback if clipboard API fails
+        });
+    });
+});
+
+// Add parallax effect to hero section
+window.addEventListener('scroll', () => {
+    const scrolled = window.pageYOffset;
+    const hero = document.querySelector('.hero');
+    if (hero && scrolled < window.innerHeight) {
+        hero.style.transform = `translateY(${scrolled * 0.5}px)`;
+    }
+});
+
+// Print styles
 const printStyle = document.createElement('style');
 printStyle.textContent = `
     @media print {
+        .navbar,
+        .hamburger,
+        .scroll-indicator,
+        .hero-buttons {
+            display: none;
+        }
         body {
             background: white;
         }
-        .container {
-            box-shadow: none;
-        }
-        .sidebar {
-            background: #1e3a5f !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
-        .main-content {
-            background: #f5f5f5 !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
-        .top-nav {
-            display: none;
+        section {
+            page-break-inside: avoid;
         }
     }
 `;
 document.head.appendChild(printStyle);
-
-// Add hover effect to contact items
-document.querySelectorAll('.contact-item').forEach(item => {
-    item.addEventListener('mouseenter', function() {
-        this.style.transform = 'translateX(10px)';
-    });
-    item.addEventListener('mouseleave', function() {
-        this.style.transform = 'translateX(0)';
-    });
-});
-
-// Add click to copy email functionality
-const emailElement = document.querySelector('.contact-item span');
-if (emailElement && emailElement.textContent.includes('@')) {
-    emailElement.style.cursor = 'pointer';
-    emailElement.title = 'Click to copy email';
-    emailElement.addEventListener('click', function() {
-        const email = this.textContent.trim();
-        navigator.clipboard.writeText(email).then(() => {
-            const originalText = this.textContent;
-            this.textContent = '✓ Copied!';
-            this.style.color = '#10b981';
-            setTimeout(() => {
-                this.textContent = originalText;
-                this.style.color = '';
-            }, 2000);
-        });
-    });
-}
